@@ -12,7 +12,7 @@ async fn main() {
     let state = Arc::new(RwLock::new(state::Shared::new()));
 
     let (http, tcp) = tokio::join!(
-        http::start_http_server(state.clone()),
+        http::server::start_http_server(state.clone()),
         tcp::server::start_tcp_server(state.clone())
     );
 

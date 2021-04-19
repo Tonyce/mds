@@ -59,23 +59,9 @@ async fn process(
     stream: TcpStream,
     addr: SocketAddr,
 ) -> Result<(), Box<dyn Error>> {
-    let mut lines = Framed::new(stream, Protocol);
+    let mut transport = Framed::new(stream, Protocol);
 
-    // Send a prompt to the client to enter their username.
-    // lines.send("Please enter your username:").await?;
-
-    // Read the first line from the `LineCodec` stream to get the username.
-    // let username = match lines.next().await {
-    //     Some(Ok(line)) => line,
-    //     // We didn't get a line so we return early here.
-    //     _ => {
-    //         tracing::error!("Failed to get username from {}. Client disconnected.", addr);
-    //         return Ok(());
-    //     }
-    // };
-
-    // Register our peer with state which internally sets up some channels.
-    let mut peer = Peer::new(state.clone(), lines).await?;
+    let mut peer = Peer::new(state.clone(), transport).await?;
 
     // A client has connected, let's let everyone know.
     {
@@ -89,15 +75,16 @@ async fn process(
     loop {
         tokio::select! {
             Some(msg) = peer.rx.recv() => {
-                peer.lines.send(msg).await?;
+                peer.transport.send(msg).await?;
             }
-            result = peer.lines.next() => match result {
+            result = peer.transport.next() => match result {
                 // A message was received from the current user, we should
                 // broadcast this message to the other users.
                 Some(Ok(msg)) => {
-                    let mut state = state.read().await;
+                    println!("msg {:?}", msg);
+                    // let mut state = state.read().await;
                     // let msg = format!("{}: {}", username, msg);
-
+                    peer.transport.send(msg).await?;
                     // state.broadcast(addr, &msg).await;
                 }
                 // An error occurred.
@@ -120,7 +107,8 @@ async fn process(
         let mut state = state.write().await;
         state.peers.remove(&addr);
 
-        // let msg = format!("{} has left the chat", username);
+        let msg = format!("{} has left", addr);
+        println!("{}", msg)
         // state.broadcast(addr, &msg).await;
     }
 

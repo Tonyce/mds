@@ -17,7 +17,7 @@ pub struct Peer {
     /// This handles sending and receiving data on the socket. When using
     /// `Lines`, we can work at the line level instead of having to manage the
     /// raw byte operations.
-    pub lines: Framed<TcpStream, Protocol>,
+    pub transport: Framed<TcpStream, Protocol>,
 
     /// Receive half of the message channel.
     ///
@@ -30,10 +30,10 @@ impl Peer {
     /// Create a new instance of `Peer`.
     pub async fn new(
         state: Arc<RwLock<Shared>>,
-        lines: Framed<TcpStream, Protocol>,
+        transport: Framed<TcpStream, Protocol>,
     ) -> io::Result<Peer> {
         // Get the client socket address
-        let addr = lines.get_ref().peer_addr()?;
+        let addr = transport.get_ref().peer_addr()?;
 
         // Create a channel for this peer
         let (tx, rx) = mpsc::unbounded_channel();
@@ -41,6 +41,6 @@ impl Peer {
         // Add an entry for this `Peer` in the shared state map.
         state.write().await.peers.insert(addr, tx);
 
-        Ok(Peer { lines, rx })
+        Ok(Peer { transport, rx })
     }
 }
