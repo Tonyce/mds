@@ -3,10 +3,10 @@ use std::net::SocketAddr;
 use tokio::sync::mpsc;
 
 /// Shorthand for the transmit half of the message channel.
-type Tx = mpsc::UnboundedSender<String>;
+pub type Tx = mpsc::UnboundedSender<Vec<u8>>;
 
 /// Shorthand for the receive half of the message channel.
-type Rx = mpsc::UnboundedReceiver<String>;
+pub type Rx = mpsc::UnboundedReceiver<Vec<u8>>;
 
 pub struct Shared {
     pub peers: HashMap<SocketAddr, Tx>,

@@ -10,12 +10,12 @@ use std::pin::Pin;
 use std::sync::Arc;
 use std::task::{Context, Poll};
 use tokio::sync::Mutex;
+use tokio::sync::RwLock;
 
 type BoxPin<T> = Pin<Box<T>>;
 
 struct Serv {
-    // backends: Arc<Mutex<Backend>>,
-    state: Arc<Mutex<Shared>>, // client: Arc<Client<HttpConnector, Body>>,
+    state: Arc<RwLock<Shared>>,
 }
 
 impl Service<Request<Body>> for Serv {
@@ -32,7 +32,7 @@ impl Service<Request<Body>> for Serv {
         let state = self.state.clone();
         // if req_version == Version::HTTP_2 {
         Box::pin(async move {
-            println!("{}", state.lock().await.counter);
+            println!("{}", state.read().await.counter);
             let res = Ok(Response::builder().body(Body::from("hello world")).unwrap());
             res
         })
@@ -44,7 +44,7 @@ impl Service<Request<Body>> for Serv {
 }
 
 struct MakeSvc {
-    state: Arc<Mutex<Shared>>,
+    state: Arc<RwLock<Shared>>,
     // counter: Counter,
     // backends: Arc<Mutex<Backend>>,
     // client: Arc<Client<HttpConnector, Body>>
@@ -67,7 +67,7 @@ impl<T> Service<T> for MakeSvc {
     }
 }
 
-pub async fn start_http_server(state: Arc<Mutex<Shared>>) -> Result<(), hyper::Error> {
+pub async fn start_http_server(state: Arc<RwLock<Shared>>) -> Result<(), hyper::Error> {
     let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
 
     let service = MakeSvc { state };
