@@ -6,7 +6,7 @@ use super::protocol::Protocol;
 use futures::SinkExt;
 use std::error::Error;
 use std::sync::Arc;
-use tokio::io::{AsyncReadExt, AsyncWriteExt};
+// use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpListener;
 use tokio_stream::StreamExt;
 // use tokio::sync::Mutex;
@@ -20,7 +20,7 @@ pub async fn start_tcp_server(state: Arc<RwLock<Shared>>) -> Result<(), Box<dyn 
 
     loop {
         // Asynchronously wait for an inbound socket.
-        let (mut socket, addr) = listener.accept().await?;
+        let (socket, addr) = listener.accept().await?;
         println!("{}", addr);
 
         // And this is where much of the magic of this server happens. We
